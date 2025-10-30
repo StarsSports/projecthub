@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ayham's Project Hub</title>
+  <style>
+    :root {
+      --bg: #0f0f0f;
+      --text: #f0f0f0;
+      --card: #1c1c1c;
+      --accent: #007bff;
+    }
+    body.light {
+      --bg: #f0f0f0;
+      --text: #111;
+      --card: #fff;
+      --accent: #007bff;
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      transition: background 0.3s, color 0.3s;
+    }
+    header {
+      background: var(--card);
+      padding: 20px;
+      text-align: center;
+      font-size: 1.5em;
+      font-weight: bold;
+      border-bottom: 2px solid #333;
+    }
+    main {
+      padding: 20px;
+      max-width: 800px;
+      margin: auto;
+    }
+    .hidden { display: none; }
+    input, button {
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      font-size: 1em;
+      border: none;
+      border-radius: 5px;
+      transition: background 0.3s;
+    }
+    input {
+      background: var(--card);
+      color: var(--text);
+    }
+    button {
+      background: var(--accent);
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    .project {
+      background: var(--card);
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      animation: fadeIn 0.5s ease;
+    }
+    video, img {
+      max-width: 100%;
+      margin-top: 10px;
+    }
+    .file-link {
+      color: #4fc3f7;
+      text-decoration: none;
+    }
+    .delete-btn {
+      background: red;
+      color: white;
+      margin-top: 10px;
+      padding: 5px;
+      border-radius: 5px;
+      font-size: 0.9em;
+    }
+    .toggle-mode {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: var(--accent);
+      color: white;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <header>Ayham's Project Hub</header>
+  <div class="toggle-mode" onclick="toggleMode()">Toggle Mode</div>
+
+  <main>
+    <div id="login">
+      <h2>Login</h2>
+      <input type="text" id="username" placeholder="Username" />
+      <input type="password" id="password" placeholder="Password" />
+      <button onclick="login()">Login</button>
+    </div>
+
+    <div id="dashboard" class="hidden">
+      <h2>Welcome, Ayham!</h2>
+      <button onclick="document.getElementById('fileInput').click()">Upload Project</button>
+      <input type="file" id="fileInput" class="hidden" onchange="uploadProject(event)" />
+      <div id="projects"></div>
+    </div>
+  </main>
+
+  <script>
+    const correctUsername = "ayham";
+    const correctPassword = "legend123";
+
+    function login() {
+      const u = document.getElementById("username").value.trim();
+      const p = document.getElementById("password").value.trim();
+      if (u === correctUsername && p === correctPassword) {
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("dashboard").classList.remove("hidden");
+        loadProjects();
+      } else {
+        alert("Incorrect username or password.");
+      }
+    }
+
+    function uploadProject(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const projects = JSON.parse(localStorage.getItem("projects") || "[]");
+        projects.push({
+          name: file.name,
+          data: e.target.result,
+          type: file.type
+        });
+        localStorage.setItem("projects", JSON.stringify(projects));
+        loadProjects();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function loadProjects() {
+      const container = document.getElementById("projects");
+      container.innerHTML = "";
+      const projects = JSON.parse(localStorage.getItem("projects") || "[]");
+
+      if (projects.length === 0) {
+        container.innerHTML = "<p>No projects uploaded yet.</p>";
+        return;
+      }
+
+      projects.forEach((p, index) => {
+        const div = document.createElement("div");
+        div.className = "project";
+
+        const title = document.createElement("strong");
+        title.textContent = p.name;
+        div.appendChild(title);
+
+        if (p.type.startsWith("video")) {
+          const video = document.createElement("video");
+          video.controls = true;
+          video.src = p.data;
+          div.appendChild(video);
+        } else if (p.type.startsWith("image")) {
+          const img = document.createElement("img");
+          img.src = p.data;
+          div.appendChild(img);
+        } else {
+          const link = document.createElement("a");
+          link.href = p.data;
+          link.download = p.name;
+          link.textContent = "Download";
+          link.className = "file-link";
+          div.appendChild(link);
+        }
+
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "Delete";
+        delBtn.className = "delete-btn";
+        delBtn.onclick = () => deleteProject(index);
+        div.appendChild(delBtn);
+
+        container.appendChild(div);
+      });
+    }
+
+    function deleteProject(index) {
+      const projects = JSON.parse(localStorage.getItem("projects") || "[]");
+      projects.splice(index, 1);
+      localStorage.setItem("projects", JSON.stringify(projects));
+      loadProjects();
+    }
+
+    function toggleMode() {
+      document.body.classList.toggle("light");
+    }
+
+    document.getElementById("login").classList.remove("hidden");
+  </script>
+
+</body>
+</html>
+
