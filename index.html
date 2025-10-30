@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ayham's Project Hub</title>
+  <title>Ayham's Cloud Hub</title>
   <style>
     :root {
       --bg: #0f0f0f;
@@ -100,7 +100,7 @@
 </head>
 <body>
 
-  <header>Ayham's Project Hub</header>
+  <header>Ayham's Cloud Hub</header>
   <div class="toggle-mode" onclick="toggleMode()">Toggle Mode</div>
 
   <main>
@@ -122,6 +122,9 @@
   <script>
     const correctUsername = "ayham";
     const correctPassword = "legend123";
+    const githubToken = "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";
+    const repoOwner = "StarsSports";
+    const repoName = "projecthub";
 
     function login() {
       const u = document.getElementById("username").value.trim();
@@ -135,55 +138,67 @@
       }
     }
 
-    function uploadProject(event) {
+    async function uploadProject(event) {
       const file = event.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = function(e) {
-        const projects = JSON.parse(localStorage.getItem("projects") || "[]");
-        projects.push({
-          name: file.name,
-          data: e.target.result,
-          type: file.type
+      reader.onload = async function(e) {
+        const content = e.target.result.split(",")[1]; // base64
+        const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/uploads/${file.name}`;
+        const res = await fetch(url, {
+          method: "PUT",
+          headers: {
+            "Authorization": `token ${githubToken}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: `Upload ${file.name}`,
+            content: content
+          })
         });
-        localStorage.setItem("projects", JSON.stringify(projects));
-        loadProjects();
+        if (res.ok) {
+          alert("Uploaded!");
+          loadProjects();
+        } else {
+          alert("Upload failed.");
+        }
       };
       reader.readAsDataURL(file);
     }
 
-    function loadProjects() {
+    async function loadProjects() {
       const container = document.getElementById("projects");
       container.innerHTML = "";
-      const projects = JSON.parse(localStorage.getItem("projects") || "[]");
-
-      if (projects.length === 0) {
-        container.innerHTML = "<p>No projects uploaded yet.</p>";
+      const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/uploads`;
+      const res = await fetch(url, {
+        headers: { "Authorization": `token ${githubToken}` }
+      });
+      if (!res.ok) {
+        container.innerHTML = "<p>Could not load projects.</p>";
         return;
       }
-
-      projects.forEach((p, index) => {
+      const files = await res.json();
+      files.forEach((file, index) => {
         const div = document.createElement("div");
         div.className = "project";
 
         const title = document.createElement("strong");
-        title.textContent = p.name;
+        title.textContent = file.name;
         div.appendChild(title);
 
-        if (p.type.startsWith("video")) {
+        if (file.name.match(/\.(mp4|webm)$/)) {
           const video = document.createElement("video");
           video.controls = true;
-          video.src = p.data;
+          video.src = file.download_url;
           div.appendChild(video);
-        } else if (p.type.startsWith("image")) {
+        } else if (file.name.match(/\.(png|jpg|jpeg|gif)$/)) {
           const img = document.createElement("img");
-          img.src = p.data;
+          img.src = file.download_url;
           div.appendChild(img);
         } else {
           const link = document.createElement("a");
-          link.href = p.data;
-          link.download = p.name;
+          link.href = file.download_url;
           link.textContent = "Download";
           link.className = "file-link";
           div.appendChild(link);
@@ -192,18 +207,36 @@
         const delBtn = document.createElement("button");
         delBtn.textContent = "Delete";
         delBtn.className = "delete-btn";
-        delBtn.onclick = () => deleteProject(index);
+        delBtn.onclick = () => deleteProject(file.name);
         div.appendChild(delBtn);
 
         container.appendChild(div);
       });
     }
 
-    function deleteProject(index) {
-      const projects = JSON.parse(localStorage.getItem("projects") || "[]");
-      projects.splice(index, 1);
-      localStorage.setItem("projects", JSON.stringify(projects));
-      loadProjects();
+    async function deleteProject(filename) {
+      const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/uploads/${filename}`;
+      const res = await fetch(url, {
+        headers: { "Authorization": `token ${githubToken}" }
+      });
+      const file = await res.json();
+      const delRes = await fetch(url, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `token ${githubToken}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message: `Delete ${filename}`,
+          sha: file.sha
+        })
+      });
+      if (delRes.ok) {
+        alert("Deleted!");
+        loadProjects();
+      } else {
+        alert("Delete failed.");
+      }
     }
 
     function toggleMode() {
@@ -215,4 +248,3 @@
 
 </body>
 </html>
-
