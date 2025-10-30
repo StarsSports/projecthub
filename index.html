@@ -3,34 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ayham's Cloud Hub</title>
+  <title>Ayham's Project Viewer</title>
   <style>
-    :root {
-      --bg: #0f0f0f;
-      --text: #f0f0f0;
-      --card: #1c1c1c;
-      --accent: #007bff;
-    }
-    body.light {
-      --bg: #f0f0f0;
-      --text: #111;
-      --card: #fff;
-      --accent: #007bff;
-    }
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      transition: background 0.3s, color 0.3s;
+      background: #111;
+      color: #eee;
     }
     header {
-      background: var(--card);
+      background: #222;
       padding: 20px;
       text-align: center;
       font-size: 1.5em;
       font-weight: bold;
-      border-bottom: 2px solid #333;
     }
     main {
       padding: 20px;
@@ -45,26 +31,21 @@
       font-size: 1em;
       border: none;
       border-radius: 5px;
-      transition: background 0.3s;
     }
     input {
-      background: var(--card);
-      color: var(--text);
+      background: #333;
+      color: #eee;
     }
     button {
-      background: var(--accent);
+      background: #007bff;
       color: white;
       cursor: pointer;
     }
-    button:hover {
-      opacity: 0.9;
-    }
     .project {
-      background: var(--card);
+      background: #222;
       padding: 10px;
       margin: 10px 0;
       border-radius: 5px;
-      animation: fadeIn 0.5s ease;
     }
     video, img {
       max-width: 100%;
@@ -74,34 +55,11 @@
       color: #4fc3f7;
       text-decoration: none;
     }
-    .delete-btn {
-      background: red;
-      color: white;
-      margin-top: 10px;
-      padding: 5px;
-      border-radius: 5px;
-      font-size: 0.9em;
-    }
-    .toggle-mode {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background: var(--accent);
-      color: white;
-      padding: 5px 10px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
   </style>
 </head>
 <body>
 
-  <header>Ayham's Cloud Hub</header>
-  <div class="toggle-mode" onclick="toggleMode()">Toggle Mode</div>
+  <header>Ayham's Project Viewer</header>
 
   <main>
     <div id="login">
@@ -113,8 +71,6 @@
 
     <div id="dashboard" class="hidden">
       <h2>Welcome, Ayham!</h2>
-      <button onclick="document.getElementById('fileInput').click()">Upload Project</button>
-      <input type="file" id="fileInput" class="hidden" onchange="uploadProject(event)" />
       <div id="projects"></div>
     </div>
   </main>
@@ -122,7 +78,6 @@
   <script>
     const correctUsername = "ayham";
     const correctPassword = "legend123";
-    const githubToken = "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";
     const repoOwner = "StarsSports";
     const repoName = "projecthub";
 
@@ -138,48 +93,17 @@
       }
     }
 
-    async function uploadProject(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = async function(e) {
-        const content = e.target.result.split(",")[1]; // base64
-        const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/uploads/${file.name}`;
-        const res = await fetch(url, {
-          method: "PUT",
-          headers: {
-            "Authorization": `token ${githubToken}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            message: `Upload ${file.name}`,
-            content: content
-          })
-        });
-        if (res.ok) {
-          alert("Uploaded!");
-          loadProjects();
-        } else {
-          alert("Upload failed.");
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-
     async function loadProjects() {
       const container = document.getElementById("projects");
       container.innerHTML = "";
       const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/uploads`;
-      const res = await fetch(url, {
-        headers: { "Authorization": `token ${githubToken}` }
-      });
+      const res = await fetch(url);
       if (!res.ok) {
         container.innerHTML = "<p>Could not load projects.</p>";
         return;
       }
       const files = await res.json();
-      files.forEach((file, index) => {
+      files.forEach((file) => {
         const div = document.createElement("div");
         div.className = "project";
 
@@ -187,7 +111,7 @@
         title.textContent = file.name;
         div.appendChild(title);
 
-        if (file.name.match(/\.(mp4|webm)$/)) {
+        if (file.name.match(/\.(mp4|webm|mov)$/)) {
           const video = document.createElement("video");
           video.controls = true;
           video.src = file.download_url;
@@ -204,46 +128,9 @@
           div.appendChild(link);
         }
 
-        const delBtn = document.createElement("button");
-        delBtn.textContent = "Delete";
-        delBtn.className = "delete-btn";
-        delBtn.onclick = () => deleteProject(file.name);
-        div.appendChild(delBtn);
-
         container.appendChild(div);
       });
     }
-
-    async function deleteProject(filename) {
-      const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/uploads/${filename}`;
-      const res = await fetch(url, {
-        headers: { "Authorization": `token ${githubToken}" }
-      });
-      const file = await res.json();
-      const delRes = await fetch(url, {
-        method: "DELETE",
-        headers: {
-          "Authorization": `token ${githubToken}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          message: `Delete ${filename}`,
-          sha: file.sha
-        })
-      });
-      if (delRes.ok) {
-        alert("Deleted!");
-        loadProjects();
-      } else {
-        alert("Delete failed.");
-      }
-    }
-
-    function toggleMode() {
-      document.body.classList.toggle("light");
-    }
-
-    document.getElementById("login").classList.remove("hidden");
   </script>
 
 </body>
