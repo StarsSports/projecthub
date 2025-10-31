@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ayham's Project Viewer</title>
+  <title>Ayham Systems</title>
   <style>
     :root {
       --bg: #0f0f0f;
@@ -23,12 +23,33 @@
 
     header {
       background: #111;
-      padding: 20px;
-      text-align: center;
-      font-size: 1.8em;
-      font-weight: bold;
-      letter-spacing: 1px;
+      padding: 30px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    }
+
+    header img {
+      height: 80px;
+    }
+
+    .brand {
+      text-align: left;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 2em;
+      letter-spacing: 1px;
+    }
+
+    .brand p {
+      margin-top: 5px;
+      font-size: 1.1em;
+      color: var(--accent);
+      font-weight: bold;
     }
 
     main {
@@ -126,7 +147,13 @@
 </head>
 <body>
 
-  <header>Ayham's Project Viewer</header>
+  <header>
+    <img src="https://starssports.github.io/projecthub/assets/logo.png" alt="Ayham Systems Logo">
+    <div class="brand">
+      <h1>AYHAM SYSTEMS</h1>
+      <p>BUILT FOR NEXT GEN</p>
+    </div>
+  </header>
 
   <main>
     <div id="login">
